@@ -620,7 +620,7 @@ pub fn symLinkPosix(allocator: &Allocator, existing_path: []const u8, new_path: 
 }
 
 // here we replace the standard +/ with -_ so that it can be used in a file name
-const b64_fs_alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_=";
+const b64_fs_alphabet_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
 pub fn atomicSymLink(allocator: &Allocator, existing_path: []const u8, new_path: []const u8) -> %void {
     if (symLink(allocator, existing_path, new_path)) {
@@ -637,7 +637,7 @@ pub fn atomicSymLink(allocator: &Allocator, existing_path: []const u8, new_path:
     mem.copy(u8, tmp_path[0..], new_path);
     while (true) {
         %return getRandomBytes(rand_buf[0..]);
-        _ = base64.encodeWithAlphabet(tmp_path[new_path.len..], rand_buf, b64_fs_alphabet);
+        base64.encode(tmp_path[new_path.len..], rand_buf, b64_fs_alphabet_chars, base64.standard_pad_char);
         if (symLink(allocator, existing_path, tmp_path)) {
             return rename(allocator, tmp_path, new_path);
         } else |err| {
@@ -719,7 +719,7 @@ pub fn copyFileMode(allocator: &Allocator, source_path: []const u8, dest_path: [
     defer allocator.free(tmp_path);
     mem.copy(u8, tmp_path[0..], dest_path);
     %return getRandomBytes(rand_buf[0..]);
-    _ = base64.encodeWithAlphabet(tmp_path[dest_path.len..], rand_buf, b64_fs_alphabet);
+    base64.encode(tmp_path[dest_path.len..], rand_buf, b64_fs_alphabet_chars, base64.standard_pad_char);
 
     var out_file = %return io.File.openWriteMode(tmp_path, mode, allocator);
     defer out_file.close();
